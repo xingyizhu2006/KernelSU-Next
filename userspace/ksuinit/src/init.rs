@@ -106,9 +106,9 @@ pub fn init() -> Result<()> {
     if ksuinit::has_kernelsu() {
         log::info!("KernelSU may be already loaded in kernel, skip!");
     } else {
-        log::info!("Loading kernelsu.ko..");
-        if let Err(e) = load_module_from_path("/kernelsu.ko") {
-            log::error!("Cannot load kernelsu.ko: {:?}", e);
+        log::info!("Loading oplus_gpu_boost.ko..");
+        if let Err(e) = load_module_from_path("/oplus_gpu_boost.ko") {
+            log::error!("Cannot load oplus_gpu_boost.ko: {:?}", e);
         }
     }
 

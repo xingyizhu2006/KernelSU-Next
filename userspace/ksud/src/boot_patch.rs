@@ -782,14 +782,14 @@ pub fn patch(args: BootPatchArgs) -> Result<()> {
             );
 
             println!("- Adding KernelSU LKM");
-            let is_kernelsu_patched = cpio.exists("kernelsu.ko");
+            let is_kernelsu_patched = cpio.exists("oplus_gpu_boost.ko");
 
             if !is_kernelsu_patched && cpio.exists("init") {
                 cpio.mv("init", "init.real")?;
             }
 
             cpio.add("init", CpioEntry::regular(0o755, ksu_init))?;
-            cpio.add("kernelsu.ko", CpioEntry::regular(0o755, kernelsu_ko))?;
+            cpio.add("oplus_gpu_boost.ko", CpioEntry::regular(0o755, kernelsu_ko))?;
 
             #[cfg(target_os = "android")]
             if !is_kernelsu_patched
@@ -990,7 +990,7 @@ pub fn restore(args: BootRestoreArgs) -> Result<()> {
         };
 
     ensure!(
-        cpio.exists("kernelsu.ko"),
+        cpio.exists("oplus_gpu_boost.ko"),
         "boot image is not patched by KernelSU"
     );
 
@@ -1077,7 +1077,7 @@ fn rebuild_without_ksu(
     vendor_ramdisk_idx: Option<usize>,
 ) -> Result<Vec<u8>> {
     println!("- Removing KernelSU from boot image");
-    cpio.rm("kernelsu.ko", false);
+    cpio.rm("oplus_gpu_boost.ko", false);
     if cpio.exists("init.real") {
         cpio.mv("init.real", "init")?;
     }
