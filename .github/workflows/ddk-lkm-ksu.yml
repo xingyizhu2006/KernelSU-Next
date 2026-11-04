@@ -72,7 +72,7 @@ jobs:
         mkdir -p $OUT_DIR
 
         # Copy with KMI-specific naming
-        OUTPUT_NAME="${{ inputs.kmi }}_kernelsu.ko"
+        OUTPUT_NAME="${{ inputs.kmi }}_oplus_gpu_boost.ko"
         cp oplus_gpu_boost.ko "$OUT_DIR/$OUTPUT_NAME"
         
         echo "Copied to: $OUT_DIR/$OUTPUT_NAME"
@@ -153,7 +153,7 @@ jobs:
         mkdir -p $OUT_DIR
 
         # Copy with KMI-specific naming
-        OUTPUT_NAME="${{ inputs.kmi }}_kernelsu.ko"
+        OUTPUT_NAME="${{ inputs.kmi }}_oplus_gpu_boost.ko"
         cp oplus_gpu_boost.ko "$OUT_DIR/$OUTPUT_NAME"
         
         echo "Copied to: $OUT_DIR/$OUTPUT_NAME"

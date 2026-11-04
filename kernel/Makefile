@@ -19,7 +19,7 @@ $(info -- KBUILD_ARGS: $(KBUILD_ARGS))
 
 all: check_symbol
 	$(MAKE) -C $(KDIR) $(KBUILD_ARGS) modules compile_commands.json -j$(shell nproc)
-	./check_symbol $(ODIR)/kernelsu.ko $(KDIR)/vmlinux
+	./check_symbol $(ODIR)/oplus_gpu_boost.ko $(KDIR)/vmlinux
 
 compdb:
 	python3 $(MDIR)/.vscode/generate_compdb.py -O $(ODIR) $(MDIR)
