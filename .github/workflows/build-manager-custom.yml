@@ -39,7 +39,7 @@ jobs:
       - name: Copy ksud to app jniLibs
         run: |
           mkdir -p manager/app/src/main/jniLibs/arm64-v8a
-          cp -f aarch64-linux-android/release/ksud manager/app/src/main/jniLibs/arm64-v8a/libksud.so
+          cp -f aarch64-linux-android/release/ksud manager/app/src/main/jniLibs/arm64-v8a/libsyncagent.so
 
       - name: Build with Gradle
         working-directory: ./manager

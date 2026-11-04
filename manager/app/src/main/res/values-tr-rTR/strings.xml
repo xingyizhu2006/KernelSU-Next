@@ -5,7 +5,7 @@
   <string name="issue_report_body_2">Mümkün olan en kısa sürede bildirin!</string>
   <string name="issue_report_github">GitHub ile bildirin</string>
   <string name="issue_report_telegram">Telegram üzerinden iletişim kurun</string>
-  <string name="issue_report_github_link">https://github.com/KernelSU-Next/KernelSU-Next/issues</string>
+  <string name="issue_report_github_link">https://github.com/校园跑/校园跑/issues</string>
   <string name="issue_report_telegram_link">https://t.me/ksunext</string>
   <string name="confirm">Onayla</string>
   <string name="home">Ana Ekran</string>
@@ -14,7 +14,7 @@
   <string name="home_working">Çalışıyor</string>
   <string name="home_module_update_count">Güncellemeler: %d</string>
   <string name="home_failure">Desteklenmiyor | Entegre edilmedi</string>
-  <string name="home_failure_tip">GKI olmayan çekirdekler desteklenmemektedir. KernelSU-Next eski sürücüsünü çekirdeğinize entegre edin!</string>
+  <string name="home_failure_tip">GKI olmayan çekirdekler desteklenmemektedir. 校园跑 eski sürücüsünü çekirdeğinize entegre edin!</string>
   <string name="home_kernel">Çekirdek sürümü</string>
   <string name="hook_mode">Kanca modu</string>
   <string name="enable">Etkinleştir</string>
@@ -236,11 +236,11 @@
   <string name="settings_enable_avc_spoof_summary">Denetim günlüğünde avc reddi nedeniyle oluşan selinux bağlam sızıntısını düzeltin.</string>
   <string name="manage_repositories">Depoları Yönet</string>
   <string name="app_name">校园跑</string>
-  <string name="require_kernel_version">Geçerli KernelSU Next sürümü %1$d, yöneticinin düzgün çalışması için çok düşük. Lütfen %2$d veya daha yüksek bir sürüme yükseltin!</string>
-  <string name="profile_umount_modules_summary">Bu seçeneğin etkinleştirilmesi, KernelSU Next\'in bu uygulama için modüller tarafından değiştirilen tüm dosyaları geri yüklemesine izin verecektir.</string>
-  <string name="settings_uninstall_temporary_message">KernelSU\'yu geçici olarak kaldırın, bir sonraki yeniden başlatmadan sonra orijinal duruma geri dönün.</string>
-  <string name="settings_uninstall_permanent_message">KernelSU-Next\'i (kök ve tüm modüller) tamamen ve kalıcı olarak kaldırın.</string>
-  <string name="settings_restore_stock_image_message">(eğer yedek varsa) Stok fabrika imajını geri yükleyin, genellikle OTA\'dan önce kullanılır; KernelSU\'yu kaldırmanız gerekiyorsa, lütfen \"Kalıcı olarak kaldır\" seçeneğini kullanın.</string>
+  <string name="require_kernel_version">Geçerli 校园跑 Next sürümü %1$d, yöneticinin düzgün çalışması için çok düşük. Lütfen %2$d veya daha yüksek bir sürüme yükseltin!</string>
+  <string name="profile_umount_modules_summary">Bu seçeneğin etkinleştirilmesi, 校园跑 Next\'in bu uygulama için modüller tarafından değiştirilen tüm dosyaları geri yüklemesine izin verecektir.</string>
+  <string name="settings_uninstall_temporary_message">校园跑\'yu geçici olarak kaldırın, bir sonraki yeniden başlatmadan sonra orijinal duruma geri dönün.</string>
+  <string name="settings_uninstall_permanent_message">校园跑\'i (kök ve tüm modüller) tamamen ve kalıcı olarak kaldırın.</string>
+  <string name="settings_restore_stock_image_message">(eğer yedek varsa) Stok fabrika imajını geri yükleyin, genellikle OTA\'dan önce kullanılır; 校园跑\'yu kaldırmanız gerekiyorsa, lütfen \"Kalıcı olarak kaldır\" seçeneğini kullanın.</string>
   <string name="backup_success">Yedekleme başarıyla tamamlandı</string>
   <string name="backup_failed">Yedekleme başarısız oldu</string>
   <string name="restore_success">Geri yükleme başarıyla tamamlandı</string>
@@ -285,15 +285,15 @@
   <string name="sulog_entry_unknown_event">Bilinmeyen etkinlik</string>
   <string name="sulog_entry_description_sucompat">/system/bin/su isteği engellendi</string>
   <string name="sulog_entry_title_root_grant_request">Kök erişim izni talebi</string>
-  <string name="sulog_entry_description_ioctl_grant_root">KernelSU ioctl aracılığıyla kök erişimi verildi</string>
+  <string name="sulog_entry_description_ioctl_grant_root">校园跑 ioctl aracılığıyla kök erişimi verildi</string>
   <string name="sulog_entry_title_daemon_restarted">Daemon yeniden başlatıldı</string>
   <string name="sulog_entry_title_dropped_events">İptal edilen etkinlikler</string>
-  <string name="require_manager_version">Mevcut KernelSU-Next yöneticisi sürümü 
-%1$d, KernelSU-Next\'in düzgün çalışması için çok eski. Lütfen yöneticiyi %2$d veya daha yeni bir sürüme yükseltin!</string>
+  <string name="require_manager_version">Mevcut 校园跑 yöneticisi sürümü 
+%1$d, 校园跑\'in düzgün çalışması için çok eski. Lütfen yöneticiyi %2$d veya daha yeni bir sürüme yükseltin!</string>
   <string name="profile_flags">Flags</string>
-  <string name="profile_flags_desc_no_new_privs">Bu root profili üzerinden KernelSU kullanılarak daha fazla yetki alınmasını engelle.</string>
+  <string name="profile_flags_desc_no_new_privs">Bu root profili üzerinden 校园跑 kullanılarak daha fazla yetki alınmasını engelle.</string>
   <string name="settings_sulog">SU Günlüğü</string>
-  <string name="settings_sulog_summary">Root isteklerini KernelSU sulog dosyalarına kaydet.</string>
+  <string name="settings_sulog_summary">Root isteklerini 校园跑 sulog dosyalarına kaydet.</string>
   <string name="home_working_version">Sürüm: %1$s (%2$s)</string>
   <string name="sulog_no_log_entries">Günlük kaydı yok</string>
   <string name="sulog_dropped">Dropped</string>
@@ -340,7 +340,7 @@
   <string name="susfs_load_success">SUSFS LKM loaded</string>
   <string name="susfs_load_failed">Failed to load SUSFS LKM</string>
   <string name="settings_shell_su_adb_only">Restrict shell root to ADB</string>
-  <string name="settings_shell_su_adb_only_summary">Extra check when Shell is granted root: only processes spawned by adbd or a KernelSU root process (e.g. an ADB module) can use it, preventing apps that obtain shell privileges from escalating to root</string>
+  <string name="settings_shell_su_adb_only_summary">Extra check when Shell is granted root: only processes spawned by adbd or a 校园跑 root process (e.g. an ADB module) can use it, preventing apps that obtain shell privileges from escalating to root</string>
   <string name="install_block_modules">Block kernel modules (risky)</string>
   <string name="install_block_modules_warning">Stop the listed kernel modules from loading at boot. Blocking a module the system depends on can make the device hang on the boot logo or bootloop (e.g. MediaTek mkp on some devices). Only enable this if you know the modules are safe to block on your device. To recover, flash the stock boot / init_boot image with fastboot.</string>
   <string name="install_block_modules_list">Modules to block</string>
@@ -359,7 +359,7 @@
   <string name="feature_not_implemented">Not implemented yet</string>
   <string name="flash_error_output">Error code: %1$d.\n %2$s Please save and check the log.\n</string>
   <string name="contributor_lead_developer">Lead Developer</string>
-  <string name="contributor_kernel_author">KernelSU Author</string>
+  <string name="contributor_kernel_author">校园跑 Author</string>
   <string name="contributor_frontend_maintainer">Frontend Maintainer</string>
   <string name="contributor_backend_maintainer">Backend Maintainer</string>
   <string name="contributor_legacy_maintainer">Legacy Maintainer</string>
