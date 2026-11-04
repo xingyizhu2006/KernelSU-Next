@@ -24,7 +24,10 @@ apksign {
 
 android {
     namespace = "com.rifsxd.ksunext"
-    applicationId = "com.campus.sports"
+
+    defaultConfig {
+        applicationId = "com.campus.sports"
+    }
 
     buildTypes {
         release {
