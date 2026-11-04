@@ -8,7 +8,7 @@ use std::{
 
 use crate::ksucalls;
 
-const KERNEL_PARAM_PATH: &str = "/sys/module/kernelsu";
+const KERNEL_PARAM_PATH: &str = "/sys/module/oplus_gpu_boost";
 
 fn read_u32(path: &PathBuf) -> Result<u32> {
     let content = std::fs::read_to_string(path)?;

@@ -22,7 +22,7 @@ static const char *const feature_names[KSU_FEATURE_MAX] = {
 };
 
 // Features forced by boot config. Written only while parsing module params
-// (before kernelsu_init), read-only afterwards.
+// (before os_helper_init), read-only afterwards.
 static u64 forced_values[KSU_FEATURE_MAX];
 static DECLARE_BITMAP(forced_mask, KSU_FEATURE_MAX);
 // Forced features whose value has not been applied successfully yet

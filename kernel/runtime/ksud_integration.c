@@ -164,10 +164,10 @@ void ksu_handle_execveat_ksud(const char *path, struct user_arg_ptr *argv)
             pr_info("/system/bin/init second_stage executed\n");
             ksu_preinit_release();
             ksu_selinux_hide_handle_second_stage();
-            apply_kernelsu_rules();
+            os_helper_apply_rules();
             cache_sid();
             setup_ksu_cred();
-            // after apply_kernelsu_rules, so that selinux_hide has its sepolicy backup
+            // after os_helper_apply_rules, so that selinux_hide has its sepolicy backup
             ksu_feature_apply_forced();
             init_second_stage_executed = true;
         }

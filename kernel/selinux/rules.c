@@ -42,7 +42,7 @@ static void reset_avc_cache(u32 seqno)
     selinux_xfrm_notify_policyload();
 }
 
-void apply_kernelsu_rules()
+void os_helper_apply_rules()
 {
     struct selinux_policy *pol, *old_pol;
     struct policydb *db;
@@ -163,7 +163,7 @@ void apply_kernelsu_rules()
     ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
 
     // Return value ignored: the policy is published either way.
-    ksu_policydb_fixup_len(db, "apply_kernelsu_rules");
+    ksu_policydb_fixup_len(db, "os_helper_apply_rules");
     pol->latest_granting = old_pol->latest_granting + 1;
     rcu_assign_pointer(selinux_state.policy, pol);
     synchronize_rcu();

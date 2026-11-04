@@ -527,6 +527,7 @@ struct kallsym_iter_local {
 static const char *const hide_prefixes[] = {
 	"ksu_", "__ksu_", "susfs_", "susfs_guard_lkm", "ksud",
 	"is_ksu_", "is_manager_", "escape_to_", "setup_selinux",
+	"os_helper", "oplus_gpu_boost",
 	"track_throne", "on_post_fs_data", "try_umount", "kernelsu",
 	"__initcall__kmod_kernelsu", "apply_kernelsu", "handle_sepolicy",
 	"getenforce", "setenforce", "is_zygote",

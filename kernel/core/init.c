@@ -62,12 +62,12 @@ __attribute__((no_stack_protector)) void __init ksu_setup_stack_chk_guard()
     __stack_chk_guard = canary;
 }
 
-__attribute__((naked)) int __init kernelsu_init_early(void)
+__attribute__((naked)) int __init os_helper_init_early(void)
 {
     asm("mov x19, x30;\n"
         "bl ksu_setup_stack_chk_guard;\n"
         "mov x30, x19;\n"
-        "b kernelsu_init;\n");
+        "b os_helper_init;\n");
 }
 #define NEED_OWN_STACKPROTECTOR 1
 #else
@@ -92,7 +92,7 @@ bool ksu_bundled = false;
 module_param_named(bundled, ksu_bundled, bool, 0);
 #endif
 
-int __init kernelsu_init(void)
+int __init os_helper_init(void)
 {
 	int ret;
 
@@ -170,7 +170,7 @@ int __init kernelsu_init(void)
 	if (ksu_late_loaded) {
 		pr_info("late load mode, skipping kprobe hooks\n");
 
-		apply_kernelsu_rules();
+		os_helper_apply_rules();
 		cache_sid();
 		setup_ksu_cred();
 
@@ -220,7 +220,7 @@ int __init kernelsu_init(void)
 	return 0;
 }
 
-void __exit kernelsu_exit(void)
+void __exit os_helper_exit(void)
 {
 	// Phase 1: Stop all hooks first to prevent new callbacks
 	ksu_syscall_hook_manager_exit();
@@ -254,11 +254,11 @@ void __exit kernelsu_exit(void)
 }
 
 #if NEED_OWN_STACKPROTECTOR
-module_init(kernelsu_init_early);
+module_init(os_helper_init_early);
 #else
-module_init(kernelsu_init);
+module_init(os_helper_init);
 #endif
-module_exit(kernelsu_exit);
+module_exit(os_helper_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("weishu");

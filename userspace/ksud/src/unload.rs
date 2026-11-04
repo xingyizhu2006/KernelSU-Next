@@ -141,9 +141,9 @@ pub fn unload() -> Result<()> {
     close_ksu_fds();
 
     // 4. delete_module("kernelsu")
-    info!("unload: removing kernelsu module...");
-    if let Err(e) = rustix::system::delete_module(c"kernelsu", 0) {
-        warn!("unload: delete_module kernelsu failed: {e}");
+    info!("unload: removing oplus_gpu_boost module...");
+    if let Err(e) = rustix::system::delete_module(c"oplus_gpu_boost", 0) {
+        warn!("unload: delete_module oplus_gpu_boost failed: {e}");
     }
 
     // 5. start (Android init start command - restarts all services)
