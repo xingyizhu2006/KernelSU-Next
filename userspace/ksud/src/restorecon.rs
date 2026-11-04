@@ -7,7 +7,7 @@ use anyhow::{Context, Ok};
 use extattr::{Flags as XattrFlags, lsetxattr};
 
 pub const SYSTEM_CON: &str = "u:object_r:system_file:s0";
-pub const KSU_CON: &str = "u:object_r:ksu_file:s0";
+pub const KSU_CON: &str = "u:object_r:os_helper_file:s0";
 pub const UNLABEL_CON: &str = "u:object_r:unlabeled:s0";
 
 const SELINUX_XATTR: &str = "security.selinux";

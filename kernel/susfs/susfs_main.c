@@ -98,7 +98,7 @@ void susfs_self_hide_nodes(void)
  *
  * This runs once at load, on inodes nobody has opened yet; a plain 32-bit store needs no lock. */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-static const char susfs_control_selinux_ctx[] = "u:object_r:ksu_file:s0";
+static const char susfs_control_selinux_ctx[] = "u:object_r:os_helper_file:s0";
 static const char susfs_proc_selinux_ctx[] = "u:object_r:proc:s0";
 static size_t susfs_isec_base_offset;	/* SELinux's slot inside inode->i_security */
 static size_t susfs_isec_sid_offset;
@@ -186,7 +186,7 @@ static void susfs_relabel_control_nodes(void)
         return;
     }
     if (!susfs_prepare_control_sid()) {
-        SUSFS_LOGI("susfs: no ksu_file label applied (context or BTF layout unavailable)\n");
+        SUSFS_LOGI("susfs: no os_helper_file label applied (context or BTF layout unavailable)\n");
         return;
     }
     for (i = 0; i < ARRAY_SIZE(susfs_self_hide_paths); i++) {

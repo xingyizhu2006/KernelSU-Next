@@ -3,6 +3,7 @@
 #include <linux/version.h>
 
 #include "policy/feature.h"
+#include "selinux/selinux.h"
 #include "uapi/feature.h"
 #include "klog.h"
 #include "ksu.h"
@@ -66,7 +67,7 @@ static const struct ksu_feature_handler avc_spoof_handler = {
 static int get_sid()
 {
 	// dont load at all if we cant get sids
-	int err = ksu_security_secctx_to_secid("u:r:su:s0", strlen("u:r:su:s0"), &su_sid);
+	int err = ksu_security_secctx_to_secid(KERNEL_SU_CONTEXT, strlen(KERNEL_SU_CONTEXT), &su_sid);
 	if (err) {
 		pr_info("avc_spoof/get_sid: su_sid not found!\n");
 		return -1;

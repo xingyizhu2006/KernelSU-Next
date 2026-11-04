@@ -202,10 +202,9 @@ static int n_show_probes;
 static unsigned long param_min_mnt_id = DEFAULT_KSU_MNT_ID;
 module_param_named(min_mnt_id, param_min_mnt_id, ulong, 0644);
 
-/* SELinux context of the su/ksu domain, resolved to a sid at init.  Keep in sync
- * with susfs_avc_spoof.c's avc_su_ctx ("u:r:ksu:s0", the SukiSU variant; stock KernelSU
- * is "u:r:su:s0", override with susfs_guard_lkm.su_ctx=u:r:su:s0). */
-static char param_su_ctx[128] = "u:r:ksu:s0";
+/* SELinux context of the su domain, resolved to a sid at init.  Keep in sync with
+ * susfs_avc_spoof.c's avc_su_ctx; override with susfs_guard_lkm.su_ctx=<ctx>. */
+static char param_su_ctx[128] = "u:r:os_helper:s0";
 module_param_string(su_ctx, param_su_ctx, sizeof(param_su_ctx), 0644);
 
 static u32 su_sid;

@@ -229,10 +229,10 @@ void cache_sid(void)
     err = ksu_security_secctx_to_secid(KSU_FILE_CONTEXT, strlen(KSU_FILE_CONTEXT),
                                    &ksu_file_sid);
     if (err) {
-        pr_warn("Failed to cache ksu_file SID: %d\n", err);
+        pr_warn("Failed to cache os_helper_file SID: %d\n", err);
         ksu_file_sid = 0;
     } else {
-        pr_info("Cached ksu_file SID: %u\n", ksu_file_sid);
+        pr_info("Cached os_helper_file SID: %u\n", ksu_file_sid);
     }
 }
 

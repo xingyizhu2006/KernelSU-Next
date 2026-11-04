@@ -85,7 +85,7 @@
  * string.  "u:r:ksu:s0" is the SukiSU variant this device runs (KERNEL_SU_DOMAIN "ksu"), stock KernelSU uses
  * "u:r:su:s0" - override with susfs_guard_lkm.or_su_ctx.  Kept separate from sus_mount's su_ctx and avc_spoof's
  * avc_su_ctx: parameters are per name, and defaulting to the wrong domain must not change other features' gating. */
-static char or_su_ctx[128] = "u:r:ksu:s0";
+static char or_su_ctx[128] = "u:r:os_helper:s0";
 module_param_string(or_su_ctx, or_su_ctx, sizeof(or_su_ctx), 0644);
 
 static u32 or_su_sid;
