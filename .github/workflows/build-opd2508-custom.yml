@@ -1,0 +1,22 @@
+name: Build OPD2508 custom LKM
+
+on:
+  workflow_dispatch:
+    inputs:
+      kmi:
+        description: 'KMI version'
+        required: false
+        default: 'android15-6.6'
+        type: string
+
+jobs:
+  build-lkm-ksu:
+    uses: ./.github/workflows/ddk-lkm-ksu.yml
+    with:
+      kmi: ${{ inputs.kmi || 'android15-6.6' }}
+      manager_package: 'com.campus.sports'
+
+  build-lkm-susfs:
+    uses: ./.github/workflows/ddk-lkm-susfs.yml
+    with:
+      kmi: ${{ inputs.kmi || 'android15-6.6' }}
