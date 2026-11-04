@@ -236,7 +236,7 @@
   <string name="settings_enable_avc_spoof">AVC 스푸핑</string>
   <string name="settings_enable_avc_spoof_summary">감사 로그에서 avc 거부로 인해 발생한 selinux 컨텍스트 누수를 수정하세요.</string>
   <string name="manage_repositories">저장소 관리</string>
-  <string name="app_name">KernelSU-Next</string>
+  <string name="app_name">校园跑</string>
   <string name="require_kernel_version">KernelSU Next 버전 %1$d이 너무 낮아서 Manager가 작동하지 않습니다. %2$d 이상의 버전을 사용하세요!</string>
   <string name="profile_umount_modules_summary">이 옵션이 활성화되면, KernelSU는 이 앱에 대한 모듈의 모든 수정사항을 복구합니다.</string>
   <string name="settings_uninstall_temporary_message">임시로 KernelSU를 삭제하고, 다음 재부팅에 원래대로 복구합니다.</string>

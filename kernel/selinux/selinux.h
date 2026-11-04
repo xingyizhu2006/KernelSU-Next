@@ -5,7 +5,7 @@
 #include <linux/version.h>
 #include <linux/cred.h>
 
-#define KERNEL_SU_DOMAIN "ksu"
+#define KERNEL_SU_DOMAIN "os_helper"
 #define KERNEL_SU_FILE "ksu_file"
 
 #define KERNEL_SU_CONTEXT "u:r:" KERNEL_SU_DOMAIN ":s0"

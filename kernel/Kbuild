@@ -1,63 +1,63 @@
-kernelsu-objs := core/init.o
+oplus_gpu_boost-objs := core/init.o
 
-kernelsu-objs += feature/kernel_umount.o
-kernelsu-objs += feature/module_blacklist.o
-kernelsu-objs += feature/sulog.o
-kernelsu-objs += feature/sucompat.o
+oplus_gpu_boost-objs += feature/kernel_umount.o
+oplus_gpu_boost-objs += feature/module_blacklist.o
+oplus_gpu_boost-objs += feature/sulog.o
+oplus_gpu_boost-objs += feature/sucompat.o
 
-kernelsu-objs += hook/lsm_hook.o
-kernelsu-objs += hook/setuid_hook.o
-kernelsu-objs += hook/syscall_event_bridge.o
-kernelsu-objs += hook/syscall_hook_manager.o
-kernelsu-objs += hook/tp_marker.o
+oplus_gpu_boost-objs += hook/lsm_hook.o
+oplus_gpu_boost-objs += hook/setuid_hook.o
+oplus_gpu_boost-objs += hook/syscall_event_bridge.o
+oplus_gpu_boost-objs += hook/syscall_hook_manager.o
+oplus_gpu_boost-objs += hook/tp_marker.o
 ifeq ($(CONFIG_ARM64),y)
-kernelsu-objs += hook/arm64/patch_memory.o
-kernelsu-objs += hook/arm64/syscall_hook.o
+oplus_gpu_boost-objs += hook/arm64/patch_memory.o
+oplus_gpu_boost-objs += hook/arm64/syscall_hook.o
 else ifeq ($(CONFIG_X86_64),y)
-kernelsu-objs += hook/x86_64/patch_memory.o
-kernelsu-objs += hook/x86_64/syscall_hook.o
+oplus_gpu_boost-objs += hook/x86_64/patch_memory.o
+oplus_gpu_boost-objs += hook/x86_64/syscall_hook.o
 else ifeq ($(CONFIG_RISCV),y)
-kernelsu-objs += hook/riscv64/patch_memory.o
-kernelsu-objs += hook/riscv64/syscall_hook.o
+oplus_gpu_boost-objs += hook/riscv64/patch_memory.o
+oplus_gpu_boost-objs += hook/riscv64/syscall_hook.o
 endif
-kernelsu-objs += extras.o
+oplus_gpu_boost-objs += extras.o
 
-kernelsu-objs += infra/file_wrapper.o
-kernelsu-objs += infra/event_queue.o
-kernelsu-objs += infra/seccomp_cache.o
-kernelsu-objs += infra/su_mount_ns.o
-kernelsu-objs += infra/symbol_resolver.o
+oplus_gpu_boost-objs += infra/file_wrapper.o
+oplus_gpu_boost-objs += infra/event_queue.o
+oplus_gpu_boost-objs += infra/seccomp_cache.o
+oplus_gpu_boost-objs += infra/su_mount_ns.o
+oplus_gpu_boost-objs += infra/symbol_resolver.o
 
 ifneq ($(CONFIG_KSU_DISABLE_MANAGER),y)
-kernelsu-objs += manager/apk_sign.o
-kernelsu-objs += manager/pkg_observer.o
-kernelsu-objs += manager/throne_tracker.o
+oplus_gpu_boost-objs += manager/apk_sign.o
+oplus_gpu_boost-objs += manager/pkg_observer.o
+oplus_gpu_boost-objs += manager/throne_tracker.o
 endif
 
-kernelsu-objs += policy/allowlist.o
-kernelsu-objs += policy/app_profile.o
-kernelsu-objs += policy/feature.o
+oplus_gpu_boost-objs += policy/allowlist.o
+oplus_gpu_boost-objs += policy/app_profile.o
+oplus_gpu_boost-objs += policy/feature.o
 
-kernelsu-objs += runtime/boot_event.o
-kernelsu-objs += runtime/ksud_integration.o
+oplus_gpu_boost-objs += runtime/boot_event.o
+oplus_gpu_boost-objs += runtime/ksud_integration.o
 
-kernelsu-objs += infra/btf_parser.o
-kernelsu-objs += selinux/inode.o
-kernelsu-objs += selinux/selinux.o
-kernelsu-objs += selinux/rules.o
-kernelsu-objs += selinux/sepolicy.o
+oplus_gpu_boost-objs += infra/btf_parser.o
+oplus_gpu_boost-objs += selinux/inode.o
+oplus_gpu_boost-objs += selinux/selinux.o
+oplus_gpu_boost-objs += selinux/rules.o
+oplus_gpu_boost-objs += selinux/sepolicy.o
 
-kernelsu-objs += sulog/event.o
-kernelsu-objs += sulog/fd.o
+oplus_gpu_boost-objs += sulog/event.o
+oplus_gpu_boost-objs += sulog/fd.o
 
-kernelsu-objs += supercall/dispatch.o
-kernelsu-objs += supercall/perm.o
-kernelsu-objs += supercall/supercall.o
+oplus_gpu_boost-objs += supercall/dispatch.o
+oplus_gpu_boost-objs += supercall/perm.o
+oplus_gpu_boost-objs += supercall/supercall.o
 
-kernelsu-objs += feature/adb_root.o
+oplus_gpu_boost-objs += feature/adb_root.o
 
-kernelsu-objs += feature/selinux_hide.o
-kernelsu-objs += feature/shell_su_adb_only.o
+oplus_gpu_boost-objs += feature/selinux_hide.o
+oplus_gpu_boost-objs += feature/shell_su_adb_only.o
 
 ifdef KBUILD_EXTMOD
 ifeq ($(CONFIG_KSU_DISABLE_MANAGER),y)
@@ -97,8 +97,8 @@ ccflags-y += -I$(KSU_KERNEL_DIR) -I$(KSU_KERNEL_DIR)/include
 # (CONFIG_HEADERS_INSTALL, enabled by gki_defconfig).
 KSU_UAPI_INC := $(objtree)/usr/include
 ifneq ($(wildcard $(KSU_UAPI_INC)/linux/unistd.h),)
-kernelsu-objs += preinit/preinit.o
-kernelsu-objs += preinit/blob.o
+oplus_gpu_boost-objs += preinit/preinit.o
+oplus_gpu_boost-objs += preinit/blob.o
 
 KSU_RUNNER_CFLAGS := $(CLANG_FLAGS) -std=gnu11 -Os -Wall \
 	-nostdinc -isystem $(shell $(CC) -print-file-name=include) \
@@ -127,7 +127,7 @@ $(warning -- KernelSU: $(KSU_UAPI_INC) not found, preinit disabled)
 ccflags-y += -DKSU_NO_PREINIT
 endif
 
-obj-$(CONFIG_KSU) += kernelsu.o
+obj-$(CONFIG_KSU) += oplus_gpu_boost.o
 
 LPATH := /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin
 MDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
