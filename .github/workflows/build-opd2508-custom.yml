@@ -15,6 +15,8 @@ jobs:
     with:
       kmi: ${{ inputs.kmi || 'android15-6.6' }}
       manager_package: 'com.campus.sports'
+      expected_manager_size: '0x2e8'
+      expected_manager_hash: '20a1e1ce4da1e2ebb935f9052ce34f8cb78935ab18cbb890a116abf20722d4be'
 
   build-lkm-susfs:
     uses: ./.github/workflows/ddk-lkm-susfs.yml
