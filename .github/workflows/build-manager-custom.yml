@@ -9,6 +9,8 @@ jobs:
     with:
       target: aarch64-linux-android
       os: ubuntu-latest
+      pack_lkm: false
+      pack_ksuinit: false
 
   build-manager:
     needs: [build-ksud]
