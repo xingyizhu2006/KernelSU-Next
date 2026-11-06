@@ -16,14 +16,15 @@
  *   u8  type       1=tap 2=down 3=move 4=up
  *   u8  contact    0..9
  *   u16 x, u16 y
- *   u16 major
+ *   u16 major     0 = 由模块随机 18..40
  *   u16 reserved
  *   u16 reserved2
  *
  * 接触状态机在模块内维护：
  *   - BTN_TOUCH / BTN_TOOL_FINGER 只在 0<->1 个接触时翻转，多指不会误抬起
- *   - tap 由 delayed work 在 30ms 后抬起，不阻塞 workqueue
+ *   - tap 由 delayed work 在 25..45ms 随机延时后抬起，不阻塞 workqueue
  *   - down 之后 1500ms 没有同槽更新则自动抬起（PC 端崩溃不会卡住触点）
+ *   - TOUCH_MAJOR 按下时随机 18..40，move 时只做 ±2 抖动，避免恒定面积特征
  */
 #define pr_fmt(fmt) "oplus_tp_helper: " fmt
 
@@ -48,13 +49,13 @@
 #include <linux/if_ether.h>
 #include <linux/kobject.h>
 #include <linux/list.h>
+#include <linux/random.h>
 #include <net/net_namespace.h>
 
 #define TP_MAGIC 0x31484354u
 #define TP_QSZ 256
 #define TP_UDP_PORT 61069
 #define TP_SLOTS 10
-#define TP_TAP_MS 30
 #define TP_STALE_MS 1500
 #define TP_TICK_MS 20
 
@@ -83,7 +84,13 @@ struct tp_slot {
 	bool active;
 	unsigned long last;
 	unsigned long expire;	/* 0 = 无自动抬起 */
+	int major;		/* 本次接触的触控面积，按下时随机 */
 };
+
+#define TP_MAJOR_MIN 18
+#define TP_MAJOR_SPAN 23	/* 18..40 */
+#define TP_TAP_MIN_MS 25
+#define TP_TAP_SPAN_MS 21	/* 25..45 */
 
 static struct input_dev *tp_dev;
 static struct device *tp_class_dev;
@@ -170,10 +177,22 @@ static int clamp_major(int v)
 
 	if (hi <= 0)
 		hi = 255;
-	if (v < 1)
-		return 1;
+	if (v <= 0)
+		return 0;	/* 0 = 交给模块随机 */
 	if (v > hi)
 		return hi;
+	return v;
+}
+
+/* 一次接触内面积只做小幅抖动，避免每帧跳变 */
+static int jitter_major(int base)
+{
+	int v = base + (int)get_random_u32_below(5) - 2;
+
+	if (v < TP_MAJOR_MIN)
+		v = TP_MAJOR_MIN;
+	if (v > TP_MAJOR_MIN + TP_MAJOR_SPAN - 1)
+		v = TP_MAJOR_MIN + TP_MAJOR_SPAN - 1;
 	return v;
 }
 
@@ -192,6 +211,10 @@ static void tp_slot_down(int slot, int x, int y, int major, unsigned long expire
 {
 	struct tp_slot *s = &tp_slots[slot];
 	bool was_active = s->active;
+
+	if (major <= 0)
+		major = TP_MAJOR_MIN + get_random_u32_below(TP_MAJOR_SPAN);
+	s->major = major;
 
 	input_mt_slot(tp_dev, slot);
 	input_mt_report_slot_state(tp_dev, MT_TOOL_FINGER, true);
@@ -215,6 +238,11 @@ static void tp_slot_move(int slot, int x, int y, int major)
 
 	if (!s->active)
 		return;
+
+	if (major <= 0) {
+		s->major = jitter_major(s->major);
+		major = s->major;
+	}
 
 	input_mt_slot(tp_dev, slot);
 	input_event(tp_dev, EV_ABS, ABS_MT_POSITION_X, x);
@@ -282,16 +310,20 @@ static void tp_handle(const struct tp_pkt *p)
 	slot = p->contact % TP_SLOTS;
 	x = clamp_axis(p->x, ABS_MT_POSITION_X);
 	y = clamp_axis(p->y, ABS_MT_POSITION_Y);
-	major = clamp_major(p->major ? p->major : 31);
+	major = clamp_major(p->major);
 
 	mutex_lock(&tp_mtx);
 	switch (p->type) {
-	case 1:
+	case 1: {
+		unsigned int tap_ms = TP_TAP_MIN_MS +
+				      get_random_u32_below(TP_TAP_SPAN_MS);
+
 		tp_slot_down(slot, x, y, major,
-			     jiffies + msecs_to_jiffies(TP_TAP_MS));
+			     jiffies + msecs_to_jiffies(tap_ms));
 		schedule_delayed_work(&tp_tick_work,
-				      msecs_to_jiffies(TP_TAP_MS + 5));
+				      msecs_to_jiffies(tap_ms + 5));
 		break;
+	}
 	case 2:
 		tp_slot_down(slot, x, y, major, 0);
 		schedule_delayed_work(&tp_tick_work,
