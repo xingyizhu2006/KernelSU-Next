@@ -1,0 +1,43 @@
+# 用法:
+#   1. 把 tools/lkm/touchinj/ 整个目录复制到 KernelSU-Next 仓库根目录（名字保持 touchinj）
+#   2. 把这个文件复制到 .github/workflows/build-touchinj.yml
+#   3. push 后在 Actions 里手动 Run workflow
+#
+# 产物: touchinj-lkm artifact 里的 touchinj.ko
+# 注意: DDK 编出来的 vermagic 是 6.6.127，加载前用 patch_vermagic.py 改成设备实际值。
+name: Build touchinj LKM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-touchinj:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ylarod/ddk-min:android15-6.6-20260828
+      options: --privileged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build touchinj.ko
+        run: |
+          set -e
+          echo "KDIR=$KDIR"
+          if [ -z "$KDIR" ] || [ ! -f "$KDIR/Makefile" ]; then
+            echo "::error::KDIR is not a prepared kernel build tree"
+            exit 1
+          fi
+          cd touchinj
+          make -C "$KDIR" M="$PWD" ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 modules -j"$(nproc)"
+          test -f touchinj.ko
+          llvm-strip -d touchinj.ko || true
+          ls -la touchinj.ko
+
+      - name: Upload touchinj.ko
+        uses: actions/upload-artifact@v4
+        with:
+          name: touchinj-lkm
+          path: touchinj/touchinj.ko
+          if-no-files-found: error
