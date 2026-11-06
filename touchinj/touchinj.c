@@ -271,7 +271,8 @@ static unsigned int touch_nf_hook(void *priv, struct sk_buff *skb,
 	if (!skb || !touch_dev)
 		return NF_ACCEPT;
 	if (debug)
-		pr_info_ratelimited("touchinj: hook proto=%04x\n", ntohs(skb->protocol));
+		pr_info_ratelimited("touchinj: hook=%u proto=%04x\n",
+				    state->hook, ntohs(skb->protocol));
 	if (skb->protocol != htons(ETH_P_IP))
 		return NF_ACCEPT;
 	if (!pskb_may_pull(skb, sizeof(struct iphdr)))
@@ -324,6 +325,13 @@ static struct nf_hook_ops touch_ops = {
 	.priority = NF_IP_PRI_FIRST,
 };
 
+static struct nf_hook_ops touch_ops_in = {
+	.hook = touch_nf_hook,
+	.pf = NFPROTO_IPV4,
+	.hooknum = NF_INET_LOCAL_IN,
+	.priority = NF_IP_PRI_FIRST,
+};
+
 static int __init touchinj_init(void)
 {
 	int ret;
@@ -340,7 +348,17 @@ static int __init touchinj_init(void)
 
 	ret = nf_register_net_hook(&init_net, &touch_ops);
 	if (ret) {
-		pr_err("touchinj: nf_register_net_hook failed: %d\n", ret);
+		pr_err("touchinj: nf_register_net_hook(pre) failed: %d\n", ret);
+		put_device(touch_class_dev);
+		touch_class_dev = NULL;
+		touch_dev = NULL;
+		return ret;
+	}
+
+	ret = nf_register_net_hook(&init_net, &touch_ops_in);
+	if (ret) {
+		pr_err("touchinj: nf_register_net_hook(local) failed: %d\n", ret);
+		nf_unregister_net_hook(&init_net, &touch_ops);
 		put_device(touch_class_dev);
 		touch_class_dev = NULL;
 		touch_dev = NULL;
@@ -350,12 +368,13 @@ static int __init touchinj_init(void)
 	if (selftest)
 		schedule_work(&tap_work);
 
-	pr_info("touchinj: loaded, udp %d\n", udp_port);
+	pr_info("touchinj: loaded, udp %d debug %d\n", udp_port, debug);
 	return 0;
 }
 
 static void __exit touchinj_exit(void)
 {
+	nf_unregister_net_hook(&init_net, &touch_ops_in);
 	nf_unregister_net_hook(&init_net, &touch_ops);
 	cancel_work_sync(&rx_work);
 	cancel_work_sync(&tap_work);
