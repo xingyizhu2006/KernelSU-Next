@@ -137,8 +137,8 @@ static int find_touchpanel(void)
 
 static int clamp_axis(int v, int axis)
 {
-	int lo = touch_dev->absmin[axis];
-	int hi = touch_dev->absmax[axis];
+	int lo = input_abs_get_min(touch_dev, axis);
+	int hi = input_abs_get_max(touch_dev, axis);
 
 	if (v < lo)
 		return lo;
@@ -149,7 +149,7 @@ static int clamp_axis(int v, int axis)
 
 static int clamp_major(int v)
 {
-	int hi = touch_dev->absmax[ABS_MT_TOUCH_MAJOR];
+	int hi = input_abs_get_max(touch_dev, ABS_MT_TOUCH_MAJOR);
 
 	if (hi <= 0)
 		hi = 255;
