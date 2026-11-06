@@ -84,7 +84,8 @@ struct tp_slot {
 	bool active;
 	unsigned long last;
 	unsigned long expire;	/* 0 = 无自动抬起 */
-	int major;		/* 本次接触的触控面积，按下时随机 */
+	int major;		/* 当前帧上报的触控面积 */
+	int major_base;		/* 按下时定的基准，抖动只围绕它 */
 };
 
 #define TP_MAJOR_MIN 18
@@ -215,6 +216,7 @@ static void tp_slot_down(int slot, int x, int y, int major, unsigned long expire
 	if (major <= 0)
 		major = TP_MAJOR_MIN + get_random_u32_below(TP_MAJOR_SPAN);
 	s->major = major;
+	s->major_base = major;
 
 	input_mt_slot(tp_dev, slot);
 	input_mt_report_slot_state(tp_dev, MT_TOOL_FINGER, true);
@@ -240,7 +242,7 @@ static void tp_slot_move(int slot, int x, int y, int major)
 		return;
 
 	if (major <= 0) {
-		s->major = jitter_major(s->major);
+		s->major = jitter_major(s->major_base);
 		major = s->major;
 	}
 
