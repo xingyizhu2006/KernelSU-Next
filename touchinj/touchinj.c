@@ -61,6 +61,7 @@ static int tap_x = 10599;
 static int tap_y = 50;
 static int udp_port = 61069;
 static int selftest = 0;
+static int debug = 0;
 module_param(tap_x, int, 0644);
 MODULE_PARM_DESC(tap_x, "selftest tap X in touchscreen ABS units");
 module_param(tap_y, int, 0644);
@@ -69,6 +70,8 @@ module_param(udp_port, int, 0644);
 MODULE_PARM_DESC(udp_port, "UDP port to intercept");
 module_param(selftest, int, 0644);
 MODULE_PARM_DESC(selftest, "inject one tap on load");
+module_param(debug, int, 0644);
+MODULE_PARM_DESC(debug, "log netfilter parsing");
 
 static struct input_dev *touch_dev;
 static struct device *touch_class_dev;
@@ -198,6 +201,10 @@ static void handle_pkt(const struct touch_pkt *p)
 	if (!touch_dev)
 		return;
 
+	if (debug)
+		pr_info_ratelimited("touchinj: handle type=%u x=%u y=%u\n",
+				    p->type, p->x, p->y);
+
 	slot = p->contact % 10;
 	x = clamp_axis(p->x, ABS_MT_POSITION_X);
 	y = clamp_axis(p->y, ABS_MT_POSITION_Y);
@@ -263,6 +270,8 @@ static unsigned int touch_nf_hook(void *priv, struct sk_buff *skb,
 
 	if (!skb || !touch_dev)
 		return NF_ACCEPT;
+	if (debug)
+		pr_info_ratelimited("touchinj: hook proto=%04x\n", ntohs(skb->protocol));
 	if (skb->protocol != htons(ETH_P_IP))
 		return NF_ACCEPT;
 	if (!pskb_may_pull(skb, sizeof(struct iphdr)))
@@ -279,14 +288,23 @@ static unsigned int touch_nf_hook(void *priv, struct sk_buff *skb,
 
 	iph = ip_hdr(skb);
 	uh = (struct udphdr *)((unsigned char *)iph + iph_len);
+	if (debug)
+		pr_info_ratelimited("touchinj: dport=%u len=%u\n",
+				    ntohs(uh->dest), ntohs(uh->len));
 	if (ntohs(uh->dest) != udp_port)
 		return NF_ACCEPT;
 	if (ntohs(uh->len) < sizeof(struct udphdr) + sizeof(pkt))
 		return NF_ACCEPT;
 
 	memcpy(&pkt, (unsigned char *)uh + sizeof(struct udphdr), sizeof(pkt));
+	if (debug)
+		pr_info_ratelimited("touchinj: magic=%08x type=%u x=%u y=%u\n",
+				    pkt.magic, pkt.type, pkt.x, pkt.y);
 	if (pkt.magic != TOUCH_MAGIC || pkt.type < 1 || pkt.type > 4)
 		return NF_ACCEPT;
+
+	if (debug)
+		pr_info_ratelimited("touchinj: enqueue\n");
 
 	spin_lock_irqsave(&qlock, flags);
 	if (((qtail + 1) % TOUCH_QSZ) != qhead) {
