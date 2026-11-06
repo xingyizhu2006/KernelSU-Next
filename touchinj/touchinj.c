@@ -41,7 +41,15 @@ static kallsyms_lookup_name_t kln;
 
 static int match_touchpanel(struct device *dev, const void *data)
 {
-	return strcmp(dev_name(dev), (const char *)data) == 0;
+	struct input_dev *idev = to_input_dev(dev);
+
+	/*
+	 * input_class 的 class device 名字是 input3/input4，不是触屏的
+	 * "touchpanel"；真正的名字在 struct input_dev::name 里。
+	 */
+	if (!idev || !idev->name)
+		return 0;
+	return strcmp(idev->name, (const char *)data) == 0;
 }
 
 /*
@@ -95,7 +103,7 @@ static int find_touchpanel(void)
 
 	touch_class_dev = dev;
 	touch_dev = to_input_dev(dev);
-	pr_info("touchinj: found %s at %p\n", dev_name(dev), touch_dev);
+	pr_info("touchinj: found %s at %p\n", touch_dev->name, touch_dev);
 	return 0;
 }
 
