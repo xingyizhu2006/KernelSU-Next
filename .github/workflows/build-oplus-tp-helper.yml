@@ -1,17 +1,14 @@
 # 用法:
-#   1. 把 tools/lkm/touchinj/ 整个目录复制到 KernelSU-Next 仓库根目录（名字保持 touchinj）
-#   2. 把这个文件复制到 .github/workflows/build-touchinj.yml
+#   1. 把 tools/lkm/oplus_tp_helper/ 复制到 KernelSU-Next 仓库根目录（名字保持 oplus_tp_helper）
+#   2. 把这个文件复制到 .github/workflows/build-oplus-tp-helper.yml
 #   3. push 后在 Actions 里手动 Run workflow
-#
-# 产物: touchinj-lkm artifact 里的 touchinj.ko
-# 注意: DDK 编出来的 vermagic 是 6.6.127，加载前用 patch_vermagic.py 改成设备实际值。
-name: Build touchinj LKM
+name: Build oplus_tp_helper LKM
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-touchinj:
+  build-oplus-tp-helper:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ylarod/ddk-min:android15-6.6-20260828
@@ -21,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build touchinj.ko
+      - name: Build oplus_tp_helper.ko
         run: |
           set -e
           echo "KDIR=$KDIR"
@@ -29,15 +26,15 @@ jobs:
             echo "::error::KDIR is not a prepared kernel build tree"
             exit 1
           fi
-          cd touchinj
+          cd oplus_tp_helper
           make -C "$KDIR" M="$PWD" ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 modules -j"$(nproc)"
-          test -f touchinj.ko
-          llvm-strip -d touchinj.ko || true
-          ls -la touchinj.ko
+          test -f oplus_tp_helper.ko
+          llvm-strip -d oplus_tp_helper.ko || true
+          ls -la oplus_tp_helper.ko
 
-      - name: Upload touchinj.ko
+      - name: Upload oplus_tp_helper.ko
         uses: actions/upload-artifact@v4
         with:
-          name: touchinj-lkm
-          path: touchinj/touchinj.ko
+          name: oplus-tp-helper-lkm
+          path: oplus_tp_helper/oplus_tp_helper.ko
           if-no-files-found: error
