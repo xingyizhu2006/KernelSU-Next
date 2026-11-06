@@ -202,8 +202,8 @@ static void handle_pkt(const struct touch_pkt *p)
 		return;
 
 	if (debug)
-		pr_info_ratelimited("touchinj: handle type=%u x=%u y=%u\n",
-				    p->type, p->x, p->y);
+		pr_info("touchinj: handle type=%u x=%u y=%u\n",
+			p->type, p->x, p->y);
 
 	slot = p->contact % 10;
 	x = clamp_axis(p->x, ABS_MT_POSITION_X);
@@ -270,9 +270,7 @@ static unsigned int touch_nf_hook(void *priv, struct sk_buff *skb,
 
 	if (!skb || !touch_dev)
 		return NF_ACCEPT;
-	if (debug)
-		pr_info_ratelimited("touchinj: hook=%u proto=%04x\n",
-				    state->hook, ntohs(skb->protocol));
+	(void)state;
 	if (skb->protocol != htons(ETH_P_IP))
 		return NF_ACCEPT;
 	if (!pskb_may_pull(skb, sizeof(struct iphdr)))
@@ -289,9 +287,6 @@ static unsigned int touch_nf_hook(void *priv, struct sk_buff *skb,
 
 	iph = ip_hdr(skb);
 	uh = (struct udphdr *)((unsigned char *)iph + iph_len);
-	if (debug)
-		pr_info_ratelimited("touchinj: dport=%u len=%u\n",
-				    ntohs(uh->dest), ntohs(uh->len));
 	if (ntohs(uh->dest) != udp_port)
 		return NF_ACCEPT;
 	if (ntohs(uh->len) < sizeof(struct udphdr) + sizeof(pkt))
@@ -299,13 +294,13 @@ static unsigned int touch_nf_hook(void *priv, struct sk_buff *skb,
 
 	memcpy(&pkt, (unsigned char *)uh + sizeof(struct udphdr), sizeof(pkt));
 	if (debug)
-		pr_info_ratelimited("touchinj: magic=%08x type=%u x=%u y=%u\n",
-				    pkt.magic, pkt.type, pkt.x, pkt.y);
+		pr_info("touchinj: port hit len=%u magic=%08x type=%u x=%u y=%u\n",
+			ntohs(uh->len), pkt.magic, pkt.type, pkt.x, pkt.y);
 	if (pkt.magic != TOUCH_MAGIC || pkt.type < 1 || pkt.type > 4)
 		return NF_ACCEPT;
 
 	if (debug)
-		pr_info_ratelimited("touchinj: enqueue\n");
+		pr_info("touchinj: enqueue\n");
 
 	spin_lock_irqsave(&qlock, flags);
 	if (((qtail + 1) % TOUCH_QSZ) != qhead) {
