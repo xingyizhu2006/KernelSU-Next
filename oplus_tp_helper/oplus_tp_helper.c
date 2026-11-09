@@ -13,12 +13,17 @@
  *   u32 magic=0x31484354
  *   u32 seq
  *   u32 token      0 = 不校验
- *   u8  type       1=tap 2=down 3=move 4=up
+ *   u8  type       1=tap 2=down 3=move 4=up 5=gyro
  *   u8  contact    0..9
  *   u16 x, u16 y
  *   u16 major     0 = 由模块随机 18..40
  *   u16 reserved
  *   u16 reserved2
+ *
+ * type=5 (陀螺仪注入):
+ *   x, y, major  按 int16 解释 -> 三轴角速度增量，单位 = hf_manager raw LSB
+ *   reserved     保持时间 ms，0 = 默认 120ms，超时归零
+ *   模块在 hf_manager_report_event() 入队前把增量加到 type==gyro_type 的事件上
  *
  * 接触状态机在模块内维护：
  *   - BTN_TOUCH / BTN_TOOL_FINGER 只在 0<->1 个接触时翻转，多指不会误抬起
@@ -66,6 +71,37 @@ MODULE_PARM_DESC(hide, "hide module from /proc/modules and /sys/module");
 static unsigned int token = 0;
 module_param(token, uint, 0644);
 MODULE_PARM_DESC(token, "shared token required in packet, 0 = disabled");
+
+/* ---------------- 陀螺仪注入参数 ---------------- */
+
+/*
+ * hf_manager_event (0x4c 字节，MTK sensor 2.0 -> hf_manager -> HAL)：
+ *   0x00 int64 timestamp
+ *   0x08 u8    type      Android 传感器类型（4 = TYPE_GYROSCOPE）
+ *   0x09 u8    accuracy
+ *   0x0a u8    action    0 = 数据事件
+ *   0x0b u8    pad
+ *   0x0c s32   data[16]  raw 值，HAL 侧除以 resolution 得到 rad/s
+ */
+#define HFE_TYPE_OFF	8
+#define HFE_ACTION_OFF	10
+#define HFE_DATA_OFF	12
+
+static int gyro_type = 4;
+module_param(gyro_type, int, 0644);
+MODULE_PARM_DESC(gyro_type, "hf_manager_event type of the gyroscope, 0 = disable");
+
+static int gyro_dump;
+module_param(gyro_dump, int, 0644);
+MODULE_PARM_DESC(gyro_dump, "1 = dump first event per type, 2 = also dump gyro samples");
+
+static char *probe_sym = "hf_manager_report_event";
+module_param(probe_sym, charp, 0644);
+MODULE_PARM_DESC(probe_sym, "symbol to kprobe for event injection");
+
+static int probe_arg = 1;
+module_param(probe_arg, int, 0644);
+MODULE_PARM_DESC(probe_arg, "xN register holding the event pointer");
 
 struct __attribute__((packed)) tp_pkt {
 	uint32_t magic;
@@ -341,6 +377,119 @@ static void tp_handle(const struct tp_pkt *p)
 	mutex_unlock(&tp_mtx);
 }
 
+/* ---------------- 陀螺仪注入 ---------------- */
+
+static struct kprobe gyro_kp;
+static bool gyro_kp_ok;
+static DEFINE_SPINLOCK(gyro_lock);
+static s32 gyro_off[3];		/* 当前叠加的三轴角速度增量（raw LSB） */
+static unsigned long gyro_expire;
+static u8 gyro_seen[32];	/* dump: 每个 type 只打印一次 */
+static int gyro_sampled;
+
+static void gyro_set(const struct tp_pkt *p)
+{
+	unsigned long flags;
+	unsigned int hold = p->reserved ? p->reserved : 120;
+
+	spin_lock_irqsave(&gyro_lock, flags);
+	gyro_off[0] = (s16)p->x;
+	gyro_off[1] = (s16)p->y;
+	gyro_off[2] = (s16)p->major;
+	gyro_expire = jiffies + msecs_to_jiffies(hold);
+	spin_unlock_irqrestore(&gyro_lock, flags);
+}
+
+static int gyro_kp_pre(struct kprobe *p, struct pt_regs *regs)
+{
+	u8 *ev;
+	u8 type, action;
+	s32 o[3];
+	unsigned long flags;
+
+	(void)p;
+
+	if (probe_arg < 0 || probe_arg > 7)
+		return 0;
+	ev = (u8 *)regs->regs[probe_arg];
+	if (!ev || (unsigned long)ev < 0xffff000000000000UL)
+		return 0;
+
+	type = *(u8 *)(ev + HFE_TYPE_OFF);
+	action = *(u8 *)(ev + HFE_ACTION_OFF);
+
+	if (gyro_dump && type < 256 &&
+	    !(gyro_seen[type >> 3] & (1u << (type & 7)))) {
+		gyro_seen[type >> 3] |= 1u << (type & 7);
+		pr_info("ev type=%u action=%u data=%d %d %d %d\n", type, action,
+			*(s32 *)(ev + HFE_DATA_OFF),
+			*(s32 *)(ev + HFE_DATA_OFF + 4),
+			*(s32 *)(ev + HFE_DATA_OFF + 8),
+			*(s32 *)(ev + HFE_DATA_OFF + 12));
+	}
+
+	if (type != gyro_type || action != 0)
+		return 0;
+
+	spin_lock_irqsave(&gyro_lock, flags);
+	if (time_after(jiffies, gyro_expire)) {
+		gyro_off[0] = 0;
+		gyro_off[1] = 0;
+		gyro_off[2] = 0;
+	}
+	o[0] = gyro_off[0];
+	o[1] = gyro_off[1];
+	o[2] = gyro_off[2];
+	spin_unlock_irqrestore(&gyro_lock, flags);
+
+	if (gyro_dump >= 2 && gyro_sampled < 40) {
+		gyro_sampled++;
+		pr_info("gyro raw=%d %d %d add=%d %d %d\n",
+			*(s32 *)(ev + HFE_DATA_OFF),
+			*(s32 *)(ev + HFE_DATA_OFF + 4),
+			*(s32 *)(ev + HFE_DATA_OFF + 8),
+			o[0], o[1], o[2]);
+	}
+
+	if (!o[0] && !o[1] && !o[2])
+		return 0;
+
+	*(s32 *)(ev + HFE_DATA_OFF) += o[0];
+	*(s32 *)(ev + HFE_DATA_OFF + 4) += o[1];
+	*(s32 *)(ev + HFE_DATA_OFF + 8) += o[2];
+	return 0;
+}
+
+static int gyro_probe_init(void)
+{
+	int ret;
+
+	if (gyro_type <= 0)
+		return 0;
+
+	memset(&gyro_kp, 0, sizeof(gyro_kp));
+	gyro_kp.symbol_name = probe_sym;
+	gyro_kp.pre_handler = gyro_kp_pre;
+
+	ret = register_kprobe(&gyro_kp);
+	if (ret) {
+		pr_warn("kprobe %s failed: %d (gyro disabled)\n", probe_sym, ret);
+		return ret;
+	}
+	gyro_kp_ok = true;
+	pr_info("kprobe %s @ %px, gyro_type=%d arg=x%d\n",
+		probe_sym, gyro_kp.addr, gyro_type, probe_arg);
+	return 0;
+}
+
+static void gyro_probe_exit(void)
+{
+	if (gyro_kp_ok) {
+		unregister_kprobe(&gyro_kp);
+		gyro_kp_ok = false;
+	}
+}
+
 static void tp_rx_work_fn(struct work_struct *work)
 {
 	struct tp_pkt p;
@@ -358,7 +507,10 @@ static void tp_rx_work_fn(struct work_struct *work)
 
 		if (token && p.token != token)
 			continue;
-		tp_handle(&p);
+		if (p.type == 5)
+			gyro_set(&p);
+		else
+			tp_handle(&p);
 	}
 }
 
@@ -373,7 +525,7 @@ static unsigned int tp_nf_hook(void *priv, struct sk_buff *skb,
 
 	(void)state;
 
-	if (!skb || !tp_dev)
+	if (!skb || (!tp_dev && !gyro_kp_ok))
 		return NF_ACCEPT;
 	if (skb->protocol != htons(ETH_P_IP))
 		return NF_ACCEPT;
@@ -397,7 +549,7 @@ static unsigned int tp_nf_hook(void *priv, struct sk_buff *skb,
 		return NF_ACCEPT;
 
 	memcpy(&pkt, (unsigned char *)uh + sizeof(struct udphdr), sizeof(pkt));
-	if (pkt.magic != TP_MAGIC || pkt.type < 1 || pkt.type > 4)
+	if (pkt.magic != TP_MAGIC || pkt.type < 1 || pkt.type > 5)
 		return NF_ACCEPT;
 
 	spin_lock_irqsave(&tp_qlock, flags);
@@ -460,6 +612,7 @@ static int __init oplus_tp_helper_init(void)
 		goto err_unreg_pre;
 	}
 
+	gyro_probe_init();
 	tp_hide_module();
 	return 0;
 
@@ -476,6 +629,7 @@ static void __exit oplus_tp_helper_exit(void)
 {
 	int i;
 
+	gyro_probe_exit();
 	nf_unregister_net_hook(&init_net, &tp_ops_in);
 	nf_unregister_net_hook(&init_net, &tp_ops);
 	cancel_work_sync(&tp_rx_work);
