@@ -176,9 +176,10 @@ static void gh_handle(const struct gh_pkt *p)
 	} else {
 		unsigned int hold = p->hold ? p->hold : 120;
 
-		gh_off[0] = p->x;
-		gh_off[1] = p->y;
-		gh_off[2] = p->z;
+		/* 陀螺仪 raw 分辨率约 2^20 LSB/(rad/s)，包里按 1/1024 rad/s 传 */
+		gh_off[0] = (s32)p->x * 1024;
+		gh_off[1] = (s32)p->y * 1024;
+		gh_off[2] = (s32)p->z * 1024;
 		gh_expire = jiffies + msecs_to_jiffies(hold);
 	}
 	spin_unlock_irqrestore(&gh_lock, flags);

@@ -21,9 +21,10 @@
  *   u16 reserved2
  *
  * type=5 (陀螺仪注入):
- *   x, y, major  按 int16 解释 -> 三轴角速度增量，单位 = hf_manager raw LSB
+ *   x, y, major  按 int16 解释 -> 三轴角速度，单位 1/1024 rad/s（1024 ≈ 1 rad/s）
  *   reserved     保持时间 ms，0 = 默认 120ms，超时归零
- *   模块在 hf_manager_report_event() 入队前把增量加到 type==gyro_type 的事件上
+ *   模块左移 10 位换成 hf_manager raw 后，在 hf_manager_report_event()
+ *   入队前加到 type==gyro_type 的事件上
  *
  * 接触状态机在模块内维护：
  *   - BTN_TOUCH / BTN_TOOL_FINGER 只在 0<->1 个接触时翻转，多指不会误抬起
@@ -393,9 +394,10 @@ static void gyro_set(const struct tp_pkt *p)
 	unsigned int hold = p->reserved ? p->reserved : 120;
 
 	spin_lock_irqsave(&gyro_lock, flags);
-	gyro_off[0] = (s16)p->x;
-	gyro_off[1] = (s16)p->y;
-	gyro_off[2] = (s16)p->major;
+	/* 陀螺仪 raw 分辨率约 2^20 LSB/(rad/s)，包里按 1/1024 rad/s 传 */
+	gyro_off[0] = (s32)(s16)p->x * 1024;
+	gyro_off[1] = (s32)(s16)p->y * 1024;
+	gyro_off[2] = (s32)(s16)p->major * 1024;
 	gyro_expire = jiffies + msecs_to_jiffies(hold);
 	spin_unlock_irqrestore(&gyro_lock, flags);
 }
