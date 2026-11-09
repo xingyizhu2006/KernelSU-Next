@@ -65,6 +65,14 @@ static int probe_arg = 1;
 module_param(probe_arg, int, 0644);
 MODULE_PARM_DESC(probe_arg, "xN register holding the event pointer");
 
+static int dump_n = 40;
+module_param(dump_n, int, 0644);
+MODULE_PARM_DESC(dump_n, "how many samples of dump_type to print");
+
+static int dump_type = -1;
+module_param(dump_type, int, 0644);
+MODULE_PARM_DESC(dump_type, "hf_manager_event type to sample, -1 = gyro_type");
+
 static unsigned int token;
 module_param(token, uint, 0644);
 MODULE_PARM_DESC(token, "shared token required in packet, 0 = disabled");
@@ -122,6 +130,16 @@ static int gh_kp_pre(struct kprobe *p, struct pt_regs *regs)
 			*(s32 *)(ev + HFE_DATA_OFF + 12));
 	}
 
+	if (dump >= 2 && gh_sampled < dump_n &&
+	    type == (dump_type < 0 ? gyro_type : dump_type)) {
+		gh_sampled++;
+		pr_info("ts=%lld type=%u raw=%d %d %d\n",
+			(long long)*(s64 *)ev, type,
+			*(s32 *)(ev + HFE_DATA_OFF),
+			*(s32 *)(ev + HFE_DATA_OFF + 4),
+			*(s32 *)(ev + HFE_DATA_OFF + 8));
+	}
+
 	if (type != gyro_type || action != 0)
 		return 0;
 
@@ -135,15 +153,6 @@ static int gh_kp_pre(struct kprobe *p, struct pt_regs *regs)
 	o[1] = gh_off[1];
 	o[2] = gh_off[2];
 	spin_unlock_irqrestore(&gh_lock, flags);
-
-	if (dump >= 2 && gh_sampled < 40) {
-		gh_sampled++;
-		pr_info("gyro raw=%d %d %d add=%d %d %d\n",
-			*(s32 *)(ev + HFE_DATA_OFF),
-			*(s32 *)(ev + HFE_DATA_OFF + 4),
-			*(s32 *)(ev + HFE_DATA_OFF + 8),
-			o[0], o[1], o[2]);
-	}
 
 	if (!o[0] && !o[1] && !o[2])
 		return 0;
