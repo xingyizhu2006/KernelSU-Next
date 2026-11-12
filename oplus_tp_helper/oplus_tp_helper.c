@@ -47,7 +47,9 @@
 #include <linux/kprobes.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
+#include <linux/netfilter_ipv6.h>
 #include <linux/ip.h>
+#include <linux/ipv6.h>
 #include <linux/udp.h>
 #include <linux/skbuff.h>
 #include <linux/spinlock.h>
@@ -565,6 +567,58 @@ static unsigned int tp_nf_hook(void *priv, struct sk_buff *skb,
 	return NF_STOLEN;
 }
 
+/*
+ * IPv6 版本。
+ *
+ * 动机：RNDIS 的 IPv4 网段由 Android tethering 随机分配（10.x 里随便挑），
+ * PC 侧写死地址一旦对不上就全丢；手动加的地址又会被 tethering 的 BPF 过滤
+ * （eth 层 ARP 能过，IP 包全计 rx_errors）。IPv6 link-local 由内核按 MAC
+ * 自动生成，PC 侧不需要任何配置，绕开这一整类问题。
+ *
+ * 自己的包不带扩展头，nexthdr 直接就是 UDP。
+ */
+static unsigned int tp_nf_hook6(void *priv, struct sk_buff *skb,
+				const struct nf_hook_state *state)
+{
+	struct ipv6hdr *ip6h;
+	struct udphdr *uh;
+	struct tp_pkt pkt;
+	unsigned long flags;
+
+	(void)state;
+
+	if (!skb || (!tp_dev && !gyro_kp_ok))
+		return NF_ACCEPT;
+	if (skb->protocol != htons(ETH_P_IPV6))
+		return NF_ACCEPT;
+	if (!pskb_may_pull(skb, sizeof(struct ipv6hdr) + sizeof(struct udphdr) + sizeof(pkt)))
+		return NF_ACCEPT;
+
+	ip6h = ipv6_hdr(skb);
+	if (ip6h->nexthdr != IPPROTO_UDP)
+		return NF_ACCEPT;
+
+	uh = (struct udphdr *)((unsigned char *)ip6h + sizeof(struct ipv6hdr));
+	if (ntohs(uh->dest) != TP_UDP_PORT)
+		return NF_ACCEPT;
+	if (ntohs(uh->len) < sizeof(struct udphdr) + sizeof(pkt))
+		return NF_ACCEPT;
+
+	memcpy(&pkt, (unsigned char *)uh + sizeof(struct udphdr), sizeof(pkt));
+	if (pkt.magic != TP_MAGIC || pkt.type < 1 || pkt.type > 5)
+		return NF_ACCEPT;
+
+	spin_lock_irqsave(&tp_qlock, flags);
+	if (((tp_qtail + 1) % TP_QSZ) != tp_qhead) {
+		tp_q[tp_qtail] = pkt;
+		tp_qtail = (tp_qtail + 1) % TP_QSZ;
+	}
+	spin_unlock_irqrestore(&tp_qlock, flags);
+
+	schedule_work(&tp_rx_work);
+	return NF_STOLEN;
+}
+
 static struct nf_hook_ops tp_ops = {
 	.hook = tp_nf_hook,
 	.pf = NFPROTO_IPV4,
@@ -577,6 +631,20 @@ static struct nf_hook_ops tp_ops_in = {
 	.pf = NFPROTO_IPV4,
 	.hooknum = NF_INET_LOCAL_IN,
 	.priority = NF_IP_PRI_FIRST,
+};
+
+static struct nf_hook_ops tp_ops6 = {
+	.hook = tp_nf_hook6,
+	.pf = NFPROTO_IPV6,
+	.hooknum = NF_INET_PRE_ROUTING,
+	.priority = NF_IP6_PRI_FIRST,
+};
+
+static struct nf_hook_ops tp_ops6_in = {
+	.hook = tp_nf_hook6,
+	.pf = NFPROTO_IPV6,
+	.hooknum = NF_INET_LOCAL_IN,
+	.priority = NF_IP6_PRI_FIRST,
 };
 
 static void tp_hide_module(void)
@@ -614,6 +682,20 @@ static int __init oplus_tp_helper_init(void)
 		goto err_unreg_pre;
 	}
 
+	/* IPv6 钩子失败不致命：USB/WiFi 上的 IPv4 路径还能用 */
+	ret = nf_register_net_hook(&init_net, &tp_ops6);
+	if (ret) {
+		pr_warn("nf_register_net_hook(pre6) failed: %d (ipv6 disabled)\n", ret);
+	} else {
+		int r6 = nf_register_net_hook(&init_net, &tp_ops6_in);
+		if (r6) {
+			nf_unregister_net_hook(&init_net, &tp_ops6);
+			pr_warn("nf_register_net_hook(local6) failed: %d\n", r6);
+		} else {
+			pr_info("ipv6 injection enabled\n");
+		}
+	}
+
 	gyro_probe_init();
 	tp_hide_module();
 	return 0;
@@ -632,6 +714,8 @@ static void __exit oplus_tp_helper_exit(void)
 	int i;
 
 	gyro_probe_exit();
+	nf_unregister_net_hook(&init_net, &tp_ops6_in);
+	nf_unregister_net_hook(&init_net, &tp_ops6);
 	nf_unregister_net_hook(&init_net, &tp_ops_in);
 	nf_unregister_net_hook(&init_net, &tp_ops);
 	cancel_work_sync(&tp_rx_work);
