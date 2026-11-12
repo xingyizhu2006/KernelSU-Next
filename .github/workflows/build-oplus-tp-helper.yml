@@ -41,5 +41,6 @@ jobs:
           name: oplus-tp-helper-lkm
           path: |
             oplus_tp_helper/oplus_tp_helper.ko
+            oplus_tp_helper/oplus_tp_helper6.ko
             oplus_gyro_helper/oplus_gyro_helper.ko
           if-no-files-found: error
